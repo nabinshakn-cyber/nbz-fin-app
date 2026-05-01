@@ -1,7 +1,7 @@
 {
   "name": "NBZ Fin",
   "short_name": "NBZ Fin",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0D0D0F",
   "theme_color": "#C9A96E",
