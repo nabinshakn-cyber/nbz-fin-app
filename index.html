@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NBZ Fin">
+<title>NBZ Fin — Personal Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #C9A96E;
+  --gold-light: #E8D5B0;
+  --gold-dark: #8B6A3E;
+  --ink: #0D0D0F;
+  --ink-2: #1A1A22;
+  --ink-3: #242432;
+  --ink-4: #2E2E40;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(201,169,110,0.18);
+  --text: #F0EDE8;
+  --text-muted: rgba(240,237,232,0.5);
+  --text-dim: rgba(240,237,232,0.28);
+  --green: #4ECBA0;
+  --red: #F0785A;
+  --blue: #5B9BD5;
+  --shadow: 0 24px 64px rgba(0,0,0,0.45);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size: 16px; }
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  flex-direction: column;
+}
+.login-card {
+  background: var(--ink-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 52px 44px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  overflow: hidden;
+}
+.login-card::before {
+  content:'';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.login-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+}
+.login-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.login-label {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: block;
+}
+.login-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.login-input:focus { border-color: var(--gold); }
+.login-btn {
+  width: 100%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+.login-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+.login-error {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  text-align: center;
+  display: none;
+}
+.login-hint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 20px;
+}
+.login-hint b { color: var(--gold); font-weight: 500; }
+
+/* ── MAIN APP ── */
+#app { display: none; position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -0.5px;
+}
+.header-right { display: flex; gap: 10px; align-items: center; }
+.icon-btn {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 9px 14px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--gold); }
+.icon-btn svg { width: 16px; height: 16px; }
+.gold-btn {
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: var(--ink);
+  font-weight: 600;
+}
+.gold-btn:hover { background: var(--gold-light); }
+
+/* ── MAIN CONTENT ── */
+.main { max-width: 1200px; margin: 0 auto; padding: 28px 32px 60px; }
+
+/* ── NET WORTH HERO ── */
+.net-worth-hero {
+  text-align: center;
+  padding: 48px 0 40px;
+  position: relative;
+}
+.net-worth-hero::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px; height: 200px;
+  background: radial-gradient(ellipse, rgba(201,169,110,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.nw-label {
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.nw-total {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.8rem, 5vw, 4rem);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -2px;
+  position: relative;
+}
+.nw-rate {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+.nw-rate span { color: var(--gold); }
+
+/* ── ACCOUNTS GRID ── */
+.section-title {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+.accounts-group { margin-bottom: 36px; }
+.country-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.country-flag { font-size: 1.3rem; }
+.country-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.country-total {
+  margin-left: auto;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+.accounts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.account-card {
+  background: var(--ink-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.account-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.account-card:hover { transform: translateY(-3px); border-color: rgba(201,169,110,0.35); box-shadow: var(--shadow); }
+.account-card:hover::after { opacity: 1; }
+.ac-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.ac-bank {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.ac-type {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.ac-vis-btn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.ac-vis-btn:hover { border-color: var(--gold); color: var(--gold); }
+.ac-balance {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+  transition: filter 0.3s;
+}
+.ac-balance.hidden { filter: blur(10px); user-select: none; }
+.ac-stats { display: flex; gap: 12px; }
+.ac-stat { flex: 1; background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px 12px; }
+.ac-stat-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.ac-stat-val { font-size: 0.95rem; font-weight: 600; }
+.ac-stat-val.inc { color: var(--green); }
+.ac-stat-val.exp { color: var(--red); }
+
+/* ── QUICK ACTIONS ── */
+.quick-actions { display: flex; gap: 12px; margin-bottom: 36px; flex-wrap: wrap; }
+.qa-btn {
+  flex: 1; min-width: 140px;
+  background: var(--ink-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex; flex-direction: column; gap: 8px;
+  text-align: left;
+}
+.qa-btn:hover { border-color: var(--gold); background: var(--ink-3); transform: translateY(-2px); }
+.qa-icon { font-size: 1.4rem; }
+.qa-label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.qa-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ── TRANSACTIONS ── */
+.txn-section {
+  background: var(--ink-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 28px;
+}
+.txn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.txn-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+.filter-row { display: flex; gap: 6px; }
+.f-btn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  font-family: 'Instrument Sans', sans-serif;
+}
+.f-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+.txn-list { display: flex; flex-direction: column; gap: 8px; }
+.txn-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.txn-item:hover { background: rgba(255,255,255,0.05); border-color: var(--glass-border); }
+.txn-ico {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.txn-ico.inc { background: rgba(78,203,160,0.12); }
+.txn-ico.exp { background: rgba(240,120,90,0.12); }
+.txn-ico.xfr { background: rgba(91,155,213,0.12); }
+.txn-name { font-size: 0.92rem; font-weight: 500; margin-bottom: 3px; }
+.txn-meta { font-size: 0.75rem; color: var(--text-muted); }
+.txn-amt { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; text-align: right; }
+.txn-amt.inc { color: var(--green); }
+.txn-amt.exp { color: var(--red); }
+.txn-amt.xfr { color: var(--blue); }
+.txn-empty { text-align: center; padding: 50px 0; color: var(--text-dim); font-size: 0.9rem; }
+
+/* ── MODALS ── */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  z-index: 8000;
+  align-items: flex-end;
+  justify-content: center;
+}
+@media (min-width: 600px) { .overlay { align-items: center; } }
+.overlay.open { display: flex; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--ink-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px 24px 0 0;
+  padding: 36px 28px 40px;
+  width: 100%; max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+@media (min-width: 600px) { .modal { border-radius: 24px; } }
+@keyframes slideUp { from { transform: translateY(40px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 28px;
+}
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+.field input, .field select {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 12px;
+  padding: 13px 16px;
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus { border-color: var(--gold); }
+.field select option { background: var(--ink-3); }
+.modal-actions { display: flex; gap: 10px; margin-top: 26px; }
+.m-cancel {
+  flex: 1; padding: 14px; background: transparent;
+  border: 1px solid var(--glass-border); border-radius: 12px;
+  color: var(--text-muted); cursor: pointer; font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.95rem; transition: all 0.2s;
+}
+.m-cancel:hover { border-color: var(--text-muted); color: var(--text); }
+.m-submit {
+  flex: 2; padding: 14px; background: var(--gold);
+  border: 1px solid var(--gold); border-radius: 12px;
+  color: var(--ink); cursor: pointer; font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.95rem; font-weight: 600; transition: all 0.2s;
+}
+.m-submit:hover { background: var(--gold-light); }
+.close-btn {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 8px; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-muted); font-size: 1.1rem;
+  transition: all 0.2s;
+}
+.close-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── SETTINGS PANEL ── */
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.settings-label { font-size: 0.9rem; color: var(--text); }
+.settings-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.settings-input {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 8px; padding: 8px 12px; color: var(--text);
+  font-family: 'Instrument Sans', sans-serif; font-size: 0.9rem;
+  outline: none; width: 120px; text-align: right;
+}
+.settings-input:focus { border-color: var(--gold); }
+.danger-btn {
+  background: rgba(240,120,90,0.12); border: 1px solid rgba(240,120,90,0.3);
+  color: var(--red); border-radius: 8px; padding: 8px 16px;
+  cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+  font-family: 'Instrument Sans', sans-serif;
+}
+.danger-btn:hover { background: rgba(240,120,90,0.22); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--ink-3); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 12px 24px;
+  color: var(--text); font-size: 0.9rem;
+  opacity: 0; transition: all 0.35s;
+  z-index: 9999; pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(78,203,160,0.4); }
+.toast.error { border-color: rgba(240,120,90,0.4); }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  background: linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.05));
+  border: 1px solid rgba(201,169,110,0.3);
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.install-banner:hover { border-color: var(--gold); }
+.install-icon { font-size: 1.8rem; }
+.install-text .t1 { font-size: 0.95rem; font-weight: 600; color: var(--gold); }
+.install-text .t2 { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.install-cta {
+  margin-left: auto; background: var(--gold); color: var(--ink);
+  border: none; border-radius: 10px; padding: 9px 18px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .header { padding: 20px 18px 0; }
+  .main { padding: 20px 18px 60px; }
+  .login-card { padding: 36px 24px; margin: 16px; }
+  .accounts-grid { grid-template-columns: 1fr; }
+  .quick-actions { gap: 8px; }
+  .qa-btn { min-width: 120px; padding: 16px; }
+  .txn-section { padding: 20px 16px; }
+  .nw-total { font-size: 2.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">NBZ FIN</div>
+    <div class="login-sub">Personal Finance Manager</div>
+    <label class="login-label">Username</label>
+    <input type="text" id="loginUser" class="login-input" placeholder="Enter username" autocomplete="username">
+    <label class="login-label">Password</label>
+    <input type="password" id="loginPass" class="login-input" placeholder="Enter password" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+    <div class="login-hint">Default: <b>admin</b> / <b>nbz2024</b> &nbsp;·&nbsp; Change in Settings</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="header">
+    <div class="logo">NBZ FIN</div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="openModal('settingsModal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        Settings
+      </button>
+      <button class="icon-btn gold-btn" onclick="openModal('addTxnModal')">+ Transaction</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="installBanner" class="install-banner" style="display:none" onclick="installPWA()">
+      <div class="install-icon">📲</div>
+      <div class="install-text">
+        <div class="t1">Install NBZ Fin on your phone</div>
+        <div class="t2">Add to home screen for app-like experience — free, works offline</div>
+      </div>
+      <button class="install-cta">Install</button>
+    </div>
+
+    <!-- Net Worth Hero -->
+    <div class="net-worth-hero">
+      <div class="nw-label">Total Net Worth</div>
+      <div class="nw-total" id="totalAED">AED 0.00</div>
+      <div class="nw-rate">Also <span id="totalINR">₹0</span> · Rate: 1 AED = <span id="rateDisp">22.50</span> INR</div>
+    </div>
+
+    <!-- UAE Accounts -->
+    <div class="accounts-group">
+      <div class="country-header">
+        <span class="country-flag">🇦🇪</span>
+        <span class="country-name">United Arab Emirates</span>
+        <span class="country-total" id="uaeTotalDisp">AED 0.00</span>
+      </div>
+      <div class="accounts-grid" id="uaeGrid"></div>
+    </div>
+
+    <!-- India Accounts -->
+    <div class="accounts-group">
+      <div class="country-header">
+        <span class="country-flag">🇮🇳</span>
+        <span class="country-name">India</span>
+        <span class="country-total" id="indiaTotalDisp">₹0.00</span>
+      </div>
+      <div class="accounts-grid" id="indiaGrid"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="qa-btn" onclick="openModal('transferModal')">
+        <span class="qa-icon">💸</span>
+        <span class="qa-label">Transfer</span>
+        <span class="qa-sub">Between accounts</span>
+      </button>
+      <button class="qa-btn" onclick="openModal('upiModal')">
+        <span class="qa-icon">📱</span>
+        <span class="qa-label">UPI Payment</span>
+        <span class="qa-sub">India quick send</span>
+      </button>
+      <button class="qa-btn" onclick="exportJSON()">
+        <span class="qa-icon">📤</span>
+        <span class="qa-label">Export Data</span>
+        <span class="qa-sub">Download JSON</span>
+      </button>
+      <button class="qa-btn" onclick="openModal('manageAccountsModal')">
+        <span class="qa-icon">🏦</span>
+        <span class="qa-label">Manage Banks</span>
+        <span class="qa-sub">Add / rename</span>
+      </button>
+    </div>
+
+    <!-- Transactions -->
+    <div class="txn-section">
+      <div class="txn-header">
+        <div class="txn-title">Transactions</div>
+        <div class="filter-row">
+          <button class="f-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="f-btn" onclick="setFilter('uae',this)">🇦🇪</button>
+          <button class="f-btn" onclick="setFilter('india',this)">🇮🇳</button>
+        </div>
+      </div>
+      <div class="txn-list" id="txnList"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Add Transaction -->
+<div class="overlay" id="addTxnModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('addTxnModal')">✕</button>
+    <div class="modal-title">Add Transaction</div>
+    <div class="field"><label>Account</label>
+      <select id="txnAccount"></select>
+    </div>
+    <div class="field"><label>Type</label>
+      <select id="txnType">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+    </div>
+    <div class="field"><label>Description</label>
+      <input type="text" id="txnDesc" placeholder="Salary, Groceries, Rent...">
+    </div>
+    <div class="field"><label>Amount</label>
+      <input type="number" step="0.01" id="txnAmount" placeholder="0.00">
+    </div>
+    <div class="field"><label>Category</label>
+      <select id="txnCat">
+        <option value="💼 Salary">💼 Salary</option>
+        <option value="🍔 Food">🍔 Food & Dining</option>
+        <option value="🚗 Transport">🚗 Transport</option>
+        <option value="🛍️ Shopping">🛍️ Shopping</option>
+        <option value="📄 Bills">📄 Bills & Utilities</option>
+        <option value="🎬 Entertainment">🎬 Entertainment</option>
+        <option value="🏥 Health">🏥 Healthcare</option>
+        <option value="📦 Other">📦 Other</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="m-cancel" onclick="closeModal('addTxnModal')">Cancel</button>
+      <button class="m-submit" onclick="addTransaction()">Add Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer -->
+<div class="overlay" id="transferModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('transferModal')">✕</button>
+    <div class="modal-title">Transfer</div>
+    <div class="field"><label>From Account</label>
+      <select id="xfrFrom"></select>
+    </div>
+    <div class="field"><label>To Account</label>
+      <select id="xfrTo"></select>
+    </div>
+    <div class="field"><label>Amount</label>
+      <input type="number" step="0.01" id="xfrAmt" placeholder="0.00">
+    </div>
+    <div class="modal-actions">
+      <button class="m-cancel" onclick="closeModal('transferModal')">Cancel</button>
+      <button class="m-submit" onclick="doTransfer()">Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPI -->
+<div class="overlay" id="upiModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('upiModal')">✕</button>
+    <div class="modal-title">UPI Payment</div>
+    <div class="field"><label>From Account</label>
+      <select id="upiAccount"></select>
+    </div>
+    <div class="field"><label>UPI ID / Mobile</label>
+      <input type="text" id="upiId" placeholder="name@upi or 9876543210">
+    </div>
+    <div class="field"><label>Amount (₹)</label>
+      <input type="number" step="0.01" id="upiAmt" placeholder="0.00">
+    </div>
+    <div class="field"><label>Note (optional)</label>
+      <input type="text" id="upiNote" placeholder="Payment for...">
+    </div>
+    <div class="modal-actions">
+      <button class="m-cancel" onclick="closeModal('upiModal')">Cancel</button>
+      <button class="m-submit" onclick="doUPI()">Send ₹</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Accounts -->
+<div class="overlay" id="manageAccountsModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('manageAccountsModal')">✕</button>
+    <div class="modal-title">Manage Banks</div>
+    <div id="accountsList" style="margin-bottom:24px"></div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px">
+      <div style="font-size:0.8rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px">Add New Account</div>
+      <div class="field"><label>Country</label>
+        <select id="newAccCountry">
+          <option value="uae">🇦🇪 UAE (AED)</option>
+          <option value="india">🇮🇳 India (INR)</option>
+        </select>
+      </div>
+      <div class="field"><label>Bank Name</label>
+        <input type="text" id="newAccBank" placeholder="e.g. Emirates NBD">
+      </div>
+      <div class="field"><label>Account Type</label>
+        <input type="text" id="newAccType" placeholder="e.g. Current, Savings">
+      </div>
+      <button class="m-submit" style="width:100%;margin-top:4px" onclick="addAccount()">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('settingsModal')">✕</button>
+    <div class="modal-title">Settings</div>
+    <div class="settings-row">
+      <div><div class="settings-label">Exchange Rate</div><div class="settings-sub">1 AED = ? INR</div></div>
+      <input type="number" step="0.01" class="settings-input" id="rateInput" placeholder="22.50">
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Username</div><div class="settings-sub">Login credential</div></div>
+      <input type="text" class="settings-input" id="newUser" placeholder="admin">
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Password</div><div class="settings-sub">Login credential</div></div>
+      <input type="password" class="settings-input" id="newPass" placeholder="••••••••">
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Reset All Data</div><div class="settings-sub">Wipe everything</div></div>
+      <button class="danger-btn" onclick="resetData()">Reset</button>
+    </div>
+    <div class="modal-actions" style="margin-top:24px">
+      <button class="m-cancel" onclick="closeModal('settingsModal')">Cancel</button>
+      <button class="m-submit" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DEFAULT STATE ──
+const DEFAULT = {
+  auth: { user: 'admin', pass: 'nbz2024' },
+  rate: 22.50,
+  accounts: [
+    { id: 'ae1', country:'uae', bank:'Emirates NBD', type:'Current Account', balance:0, income:0, expense:0, visible:true },
+    { id: 'ae2', country:'uae', bank:'ADCB', type:'Savings Account', balance:0, income:0, expense:0, visible:true },
+    { id: 'ae3', country:'uae', bank:'FAB', type:'Salary Account', balance:0, income:0, expense:0, visible:true },
+    { id: 'in1', country:'india', bank:'HDFC Bank', type:'Savings Account', balance:0, income:0, expense:0, visible:true },
+    { id: 'in2', country:'india', bank:'SBI', type:'Savings Account', balance:0, income:0, expense:0, visible:true },
+  ],
+  transactions: []
+};
+
+let D = loadData();
+let txnFilter = 'all';
+let deferredInstall = null;
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('nbzfin_v2')) || JSON.parse(JSON.stringify(DEFAULT)); }
+  catch(e) { return JSON.parse(JSON.stringify(DEFAULT)); }
+}
+function save() { localStorage.setItem('nbzfin_v2', JSON.stringify(D)); }
+
+// ── AUTH ──
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (u === D.auth.user && p === D.auth.pass) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ── RENDER ──
+function renderAll() {
+  renderAccounts();
+  renderTxns();
+  updateTotals();
+}
+
+function renderAccounts() {
+  const uaeAccs = D.accounts.filter(a => a.country==='uae');
+  const indAccs = D.accounts.filter(a => a.country==='india');
+  document.getElementById('uaeGrid').innerHTML = uaeAccs.map(cardHTML).join('');
+  document.getElementById('indiaGrid').innerHTML = indAccs.map(cardHTML).join('');
+  populateAccountDropdowns();
+}
+
+function cardHTML(a) {
+  const sym = a.country==='uae' ? 'AED' : '₹';
+  const bal = a.balance.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return `
+  <div class="account-card" id="card_${a.id}">
+    <div class="ac-header">
+      <div>
+        <div class="ac-bank">${a.bank}</div>
+        <div class="ac-type">${a.type}</div>
+      </div>
+      <button class="ac-vis-btn" onclick="toggleVis('${a.id}')">${a.visible ? '👁 Hide':'👁‍🗨 Show'}</button>
+    </div>
+    <div class="ac-balance ${a.visible?'':'hidden'}" id="bal_${a.id}">${sym} ${bal}</div>
+    <div class="ac-stats">
+      <div class="ac-stat"><div class="ac-stat-label">Income</div><div class="ac-stat-val inc">+${sym} ${a.income.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+      <div class="ac-stat"><div class="ac-stat-label">Expenses</div><div class="ac-stat-val exp">-${sym} ${a.expense.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    </div>
+  </div>`;
+}
+
+function toggleVis(id) {
+  const a = D.accounts.find(x=>x.id===id);
+  if(!a) return;
+  a.visible = !a.visible;
+  save();
+  renderAccounts();
+}
+
+function updateTotals() {
+  const uaeTotal = D.accounts.filter(a=>a.country==='uae').reduce((s,a)=>s+a.balance,0);
+  const indTotal = D.accounts.filter(a=>a.country==='india').reduce((s,a)=>s+a.balance,0);
+  const totalAED = uaeTotal + (indTotal / D.rate);
+  document.getElementById('totalAED').textContent = 'AED ' + totalAED.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('totalINR').textContent = '₹' + (totalAED * D.rate).toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('rateDisp').textContent = D.rate.toFixed(2);
+  document.getElementById('uaeTotalDisp').textContent = 'AED ' + uaeTotal.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('indiaTotalDisp').textContent = '₹' + indTotal.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function populateAccountDropdowns() {
+  const opts = D.accounts.map(a=>`<option value="${a.id}">${a.country==='uae'?'🇦🇪':'🇮🇳'} ${a.bank} – ${a.type}</option>`).join('');
+  ['txnAccount','xfrFrom','xfrTo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+  const indOpts = D.accounts.filter(a=>a.country==='india').map(a=>`<option value="${a.id}">🇮🇳 ${a.bank} – ${a.type}</option>`).join('');
+  const upi = document.getElementById('upiAccount'); if(upi) upi.innerHTML = indOpts || '<option value="">No India accounts</option>';
+}
+
+function renderTxns() {
+  const list = document.getElementById('txnList');
+  let txns = [...D.transactions].reverse();
+  if(txnFilter==='uae') txns = txns.filter(t=>{ const a=D.accounts.find(x=>x.id===t.account); return a&&a.country==='uae'; });
+  if(txnFilter==='india') txns = txns.filter(t=>{ const a=D.accounts.find(x=>x.id===t.account); return a&&a.country==='india'; });
+  if(txns.length===0){ list.innerHTML='<div class="txn-empty">No transactions yet. Add one to get started.</div>'; return; }
+  list.innerHTML = txns.map(t=>{
+    const a = D.accounts.find(x=>x.id===t.account);
+    const sym = a?.country==='uae' ? 'AED' : '₹';
+    const icoClass = t.type==='income'?'inc':t.type==='expense'?'exp':'xfr';
+    const ico = t.type==='income'?'💰':t.type==='expense'?'💸':'🔄';
+    const sign = t.type==='income'?'+':t.type==='expense'?'-':'';
+    const flag = a?.country==='uae'?'🇦🇪':'🇮🇳';
+    return `<div class="txn-item">
+      <div class="txn-ico ${icoClass}">${ico}</div>
+      <div>
+        <div class="txn-name">${t.desc}</div>
+        <div class="txn-meta">${t.cat} · ${t.date} ${flag} ${a?a.bank:''}</div>
+      </div>
+      <div class="txn-amt ${icoClass}">${sign}${sym} ${t.amount.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f, btn) {
+  txnFilter = f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTxns();
+}
+
+// ── TRANSACTIONS ──
+function addTransaction() {
+  const accId = document.getElementById('txnAccount').value;
+  const type = document.getElementById('txnType').value;
+  const desc = document.getElementById('txnDesc').value.trim();
+  const amount = parseFloat(document.getElementById('txnAmount').value);
+  const cat = document.getElementById('txnCat').value;
+  if(!desc || !amount || amount<=0) { toast('Please fill all fields','error'); return; }
+  const a = D.accounts.find(x=>x.id===accId);
+  if(!a) return;
+  if(type==='expense' && a.balance < amount) { toast('Insufficient balance!','error'); return; }
+  D.transactions.push({ id:Date.now(), account:accId, type, desc, amount, cat, date:new Date().toLocaleDateString('en-GB') });
+  if(type==='income') { a.balance+=amount; a.income+=amount; }
+  else { a.balance-=amount; a.expense+=amount; }
+  save(); renderAll(); closeModal('addTxnModal');
+  document.getElementById('txnDesc').value=''; document.getElementById('txnAmount').value='';
+  toast('Transaction added ✓','success');
+}
+
+function doTransfer() {
+  const fromId = document.getElementById('xfrFrom').value;
+  const toId = document.getElementById('xfrTo').value;
+  const amount = parseFloat(document.getElementById('xfrAmt').value);
+  if(fromId===toId) { toast('Cannot transfer to same account','error'); return; }
+  if(!amount||amount<=0) { toast('Enter valid amount','error'); return; }
+  const from = D.accounts.find(x=>x.id===fromId);
+  const to = D.accounts.find(x=>x.id===toId);
+  if(!from||!to) return;
+  if(from.balance < amount) { toast('Insufficient balance!','error'); return; }
+  let converted = amount;
+  if(from.country==='uae'&&to.country==='india') converted = amount * D.rate;
+  else if(from.country==='india'&&to.country==='uae') converted = amount / D.rate;
+  from.balance -= amount; from.expense += amount;
+  to.balance += converted; to.income += converted;
+  const sym1 = from.country==='uae'?'AED':'₹';
+  const sym2 = to.country==='uae'?'AED':'₹';
+  D.transactions.push({ id:Date.now(), account:fromId, type:'transfer', desc:`Transfer → ${to.bank}`, amount, cat:'🔄 Transfer', date:new Date().toLocaleDateString('en-GB') });
+  save(); renderAll(); closeModal('transferModal');
+  document.getElementById('xfrAmt').value='';
+  toast(`${sym1}${amount.toFixed(2)} → ${sym2}${converted.toFixed(2)} ✓`,'success');
+}
+
+function doUPI() {
+  const accId = document.getElementById('upiAccount').value;
+  const upiId = document.getElementById('upiId').value.trim();
+  const amount = parseFloat(document.getElementById('upiAmt').value);
+  const note = document.getElementById('upiNote').value.trim() || 'UPI Payment';
+  if(!upiId||!amount||amount<=0) { toast('Enter UPI ID and amount','error'); return; }
+  const a = D.accounts.find(x=>x.id===accId);
+  if(!a) return;
+  if(a.balance < amount) { toast('Insufficient balance!','error'); return; }
+  a.balance -= amount; a.expense += amount;
+  D.transactions.push({ id:Date.now(), account:accId, type:'expense', desc:`UPI → ${upiId}: ${note}`, amount, cat:'📱 UPI', date:new Date().toLocaleDateString('en-GB') });
+  save(); renderAll(); closeModal('upiModal');
+  document.getElementById('upiId').value=''; document.getElementById('upiAmt').value=''; document.getElementById('upiNote').value='';
+  toast('UPI payment sent ✓','success');
+}
+
+// ── ACCOUNT MANAGEMENT ──
+function addAccount() {
+  const country = document.getElementById('newAccCountry').value;
+  const bank = document.getElementById('newAccBank').value.trim();
+  const type = document.getElementById('newAccType').value.trim();
+  if(!bank||!type) { toast('Enter bank name and type','error'); return; }
+  const id = country.slice(0,2) + Date.now();
+  D.accounts.push({ id, country, bank, type, balance:0, income:0, expense:0, visible:true });
+  save(); renderAll();
+  document.getElementById('newAccBank').value=''; document.getElementById('newAccType').value='';
+  renderAccountsList();
+  toast(`${bank} added ✓`,'success');
+}
+
+function renderAccountsList() {
+  document.getElementById('accountsList').innerHTML = D.accounts.map(a=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div>
+        <span style="font-size:0.9rem;font-weight:500">${a.country==='uae'?'🇦🇪':'🇮🇳'} ${a.bank}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px">${a.type}</span>
+      </div>
+      <button onclick="removeAccount('${a.id}')" style="background:transparent;border:1px solid rgba(240,120,90,0.3);color:var(--red);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:0.75rem">Remove</button>
+    </div>`).join('');
+}
+
+function removeAccount(id) {
+  if(D.transactions.some(t=>t.account===id)) { toast('Cannot remove account with transactions','error'); return; }
+  D.accounts = D.accounts.filter(a=>a.id!==id);
+  save(); renderAll(); renderAccountsList();
+  toast('Account removed','success');
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  const r = parseFloat(document.getElementById('rateInput').value);
+  const u = document.getElementById('newUser').value.trim();
+  const p = document.getElementById('newPass').value;
+  if(r && r>0) D.rate = r;
+  if(u) D.auth.user = u;
+  if(p) D.auth.pass = p;
+  save(); renderAll(); closeModal('settingsModal');
+  toast('Settings saved ✓','success');
+}
+
+function resetData() {
+  if(!confirm('This will wipe ALL data. Are you sure?')) return;
+  D = JSON.parse(JSON.stringify(DEFAULT));
+  save(); renderAll(); closeModal('settingsModal');
+  toast('Data reset','success');
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `nbz-fin-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  toast('Data exported ✓','success');
+}
+
+// ── MODALS ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id==='settingsModal') {
+    document.getElementById('rateInput').value = D.rate;
+    document.getElementById('newUser').value = D.auth.user;
+    document.getElementById('newPass').value = '';
+  }
+  if(id==='manageAccountsModal') renderAccountsList();
+  if(id==='transferModal'||id==='addTxnModal'||id==='upiModal') populateAccountDropdowns();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ── TOAST ──
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(()=>el.className='toast', 2800);
+}
+
+// ── PWA INSTALL ──
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBanner').style.display='flex';
+});
+function installPWA() {
+  if(deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(()=>{ document.getElementById('installBanner').style.display='none'; deferredInstall=null; });
+  } else {
+    toast('On iPhone: tap Share → Add to Home Screen','');
+  }
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+renderAll();
+</script>
+</body>
+</html>
